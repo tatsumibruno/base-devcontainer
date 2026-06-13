@@ -1,0 +1,12 @@
+# Codex CLI defaults for the devcontainer.
+#
+# Mirrors the Claude Code permission level (see claude-settings.json):
+# tools run without approval prompts, but access is scoped to the workspace
+# instead of the whole host. We deliberately do NOT use
+# `sandbox_mode = "danger-full-access"`, which grants unrestricted host access.
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+# Allow network access (parity with Claude's WebFetch/WebSearch + Bash).
+network_access = true
