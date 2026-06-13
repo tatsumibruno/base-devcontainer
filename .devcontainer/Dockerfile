@@ -8,33 +8,29 @@ RUN apt-get update && apt-get install -y \
     python3 python3-pip nodejs npm \
   && rm -rf /var/lib/apt/lists/*
 
-RUN install -m 0755 -d /etc/apt/keyrings \
-  && curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-    -o /etc/apt/keyrings/docker.asc \
-  && chmod a+r /etc/apt/keyrings/docker.asc \
-  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable" \
-    > /etc/apt/sources.list.d/docker.list \
-  && apt-get update \
-  && apt-get install -y docker-ce-cli docker-compose-plugin \
-  && rm -rf /var/lib/apt/lists/*
+# Non-root user — reduces blast radius if a package or AI tool misbehaves
+RUN groupadd --gid 1010 devuser \
+  && useradd --uid 1010 --gid 1010 -m -s /bin/zsh devuser \
+  && echo "devuser ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/devuser \
+  && chmod 0440 /etc/sudoers.d/devuser
 
-# USER ${USERNAME}
-WORKDIR /workspace
+# AI CLI tools — pinned to exact versions to prevent silent supply-chain updates
+RUN npm install -g \
+  @anthropic-ai/claude-code@2.1.177 \
+  @openai/codex@0.139.0 \
+  opencode-ai@1.17.4
 
-  # AI CLI tools
-RUN npm install -g @anthropic-ai/claude-code @openai/codex
-# rtk-ai
-ENV PATH="/root/.local/bin:$PATH"
-RUN curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | sh
-# opencode
-RUN npm i -g opencode-ai
+USER devuser
+ENV PATH="/home/devuser/.local/bin:$PATH"
 
-# Wire rtk into Claude Code (installs the command-rewrite hook and patches
-# ~/.claude/settings.json non-interactively). opencode picks up rtk via the
-# "openrtk" plugin declared in ~/.config/opencode/opencode.json.
-RUN mkdir -p /root/.claude \
+# rtk pinned to a specific release tag
+RUN curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/v0.42.4/install.sh | sh
+
+# Wire rtk into Claude Code for devuser
+RUN mkdir -p /home/devuser/.claude \
   && rtk init -g --auto-patch \
   && rtk --version \
   && rtk gain
 
+WORKDIR /workspace
 CMD ["zsh"]

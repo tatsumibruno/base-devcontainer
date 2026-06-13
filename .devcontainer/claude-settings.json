@@ -11,6 +11,11 @@
       "WebSearch",
       "Write"
     ],
-    "deny": []
+    "deny": [
+      "Bash(sudo *)",
+      "Bash(rm -rf /*)",
+      "Bash(curl * | *sh*)",
+      "Bash(wget * | *sh*)"
+    ]
   }
 }

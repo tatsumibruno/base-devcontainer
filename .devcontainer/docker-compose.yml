@@ -8,12 +8,8 @@ services:
     stdin_open: true
     working_dir: /workspace
     volumes:
-      # Monta a pasta onde voce abriu o VS Code.
       - ./workspace:/workspace
       - ./claude-settings.json:/workspace/.claude/settings.json
       - ./codex-config.toml:/workspace/.codex/config.toml
-
-      # Permite subir bancos/outros containers usando Docker do host.
-      - /var/run/docker.sock:/var/run/docker.sock
     extra_hosts:
       - "host.docker.internal:host-gateway"

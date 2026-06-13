@@ -3,7 +3,7 @@
 A ready-to-use Ubuntu 24.04 development container pre-installed with:
 
 - Git, Zsh, build tools, Python 3, Node.js/npm
-- Docker CLI (talks to the host Docker daemon via socket mount — [see security note](#-docker-socket-security-note))
+- Runs as non-root user `devuser` (uid 1000)
 - AI CLI tools: `claude` (Claude Code), `codex` (OpenAI Codex), `opencode`
 - [rtk](https://github.com/rtk-ai/rtk) wired into Claude Code for token savings
 
@@ -91,7 +91,7 @@ docker compose up -d
 docker compose exec dev zsh
 ```
 
-You are now inside `/workspace` as `root`. Files you create there are persisted in `.devcontainer/workspace/` on the host.
+You are now inside `/workspace` as `devuser`. Files you create there are persisted in `.devcontainer/workspace/` on the host.
 
 ### Stop the container
 
@@ -115,53 +115,14 @@ docker compose up -d
 
 ---
 
-## ⚠️ Docker socket security note
+## Security model
 
-By default, `docker-compose.yml` mounts the host Docker socket into the container:
+The container is intentionally isolated from the host:
 
-```yaml
-- /var/run/docker.sock:/var/run/docker.sock
-```
-
-**Why it's there:** it lets you run `docker` and `docker compose` commands from inside the container to spin up sibling containers (databases, services, etc.) without installing a full Docker daemon inside the container itself. This pattern is called Docker-out-of-Docker (DooD).
-
-**The risk:** anything running inside the container — including AI tools like `claude` or `codex` — can use this socket to control the host Docker daemon with full privileges. In practice this means a sufficiently crafty prompt or a malicious package could escape the container and get root access on your host machine.
-
-**Concrete attack surface:**
-
-```bash
-# Any process inside the container can do this:
-docker run --rm -v /:/host alpine chroot /host sh
-# → root shell on the host
-```
-
-### Disabling the Docker socket
-
-If you don't need to run Docker commands from inside the container, remove the socket mount.
-
-**`docker-compose.yml`** — delete the socket line:
-
-```yaml
-volumes:
-  - ./workspace:/workspace
-  - ./claude-settings.json:/workspace/.claude/settings.json
-  - ./codex-config.toml:/workspace/.codex/config.toml
-  # - /var/run/docker.sock:/var/run/docker.sock  ← remove this line
-```
-
-**`devcontainer.json`** — no changes needed; the socket is only declared in the Compose file.
-
-After saving, rebuild:
-
-```bash
-# Option 1
-Dev Containers: Rebuild Container
-
-# Option 2
-docker compose down && docker compose up -d --build
-```
-
-With the socket removed, `docker` commands will fail inside the container, but all AI tools and development workflows remain fully functional.
+- **Non-root user** — the container runs as `devuser` (uid 1000). A misbehaving package or AI tool cannot write outside `/workspace` or modify system files without an explicit `sudo` call.
+- **No Docker socket** — the host Docker daemon is not exposed inside the container. This removes the primary container-escape vector (Docker-out-of-Docker). If you need to spin up sibling services, run them from the host and connect via `host.docker.internal`.
+- **Pinned dependencies** — all AI CLI tools are installed at exact versions in the Dockerfile, so a compromised new release won't silently end up in your image on the next build.
+- **Claude Code deny list** — `claude-settings.json` blocks `sudo`, `rm -rf /`, and `curl/wget | sh` patterns so the AI cannot self-escalate even if prompted to.
 
 ---
 
