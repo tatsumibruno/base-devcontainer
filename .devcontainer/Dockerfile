@@ -12,7 +12,10 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd --gid 1010 devuser \
   && useradd --uid 1010 --gid 1010 -m -s /bin/zsh devuser \
   && echo "devuser ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/devuser \
-  && chmod 0440 /etc/sudoers.d/devuser
+  && chmod 0440 /etc/sudoers.d/devuser \
+  && mkdir -p /home/devuser/.ssh \
+  && chmod 700 /home/devuser/.ssh \
+  && chown devuser:devuser /home/devuser/.ssh
 
 # AI CLI tools — pinned to exact versions to prevent silent supply-chain updates
 RUN npm install -g \
