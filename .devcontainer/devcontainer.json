@@ -4,10 +4,10 @@
   "service": "dev",
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
-  "remoteUser": "devuser",
+  "remoteUser": "ubuntu",
   "mounts": [
     "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
-    "source=${localEnv:HOME}/.ssh/known_hosts,target=/home/devuser/.ssh/known_hosts,type=bind,readonly"
+    "source=${localEnv:HOME}/.ssh/known_hosts,target=/home/ubuntu/.ssh/known_hosts,type=bind,readonly"
   ],
   "containerEnv": {
     "SSH_AUTH_SOCK": "/ssh-agent"

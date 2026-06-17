@@ -3,7 +3,7 @@
 A ready-to-use Ubuntu 24.04 development container pre-installed with:
 
 - Git, Zsh, build tools, Python 3, Node.js/npm
-- Runs as non-root user `devuser` (uid 1000)
+- Runs as non-root user `ubuntu` (uid 1000)
 - AI CLI tools: `claude` (Claude Code), `codex` (OpenAI Codex), `opencode`
 - [rtk](https://github.com/rtk-ai/rtk) wired into Claude Code for token savings
 
@@ -91,7 +91,7 @@ docker compose up -d
 docker compose exec dev zsh
 ```
 
-You are now inside `/workspace` as `devuser`. Files you create there are persisted in `.devcontainer/workspace/` on the host.
+You are now inside `/workspace` as `ubuntu`. Files you create there are persisted in `.devcontainer/workspace/` on the host.
 
 ### Stop the container
 
@@ -119,7 +119,7 @@ docker compose up -d
 
 The container is intentionally isolated from the host:
 
-- **Non-root user** — the container runs as `devuser` (uid 1000). A misbehaving package or AI tool cannot write outside `/workspace` or modify system files without an explicit `sudo` call.
+- **Non-root user** — the container runs as `ubuntu` (uid 1000). A misbehaving package or AI tool cannot write outside `/workspace` or modify system files without an explicit `sudo` call.
 - **No Docker socket** — the host Docker daemon is not exposed inside the container. This removes the primary container-escape vector (Docker-out-of-Docker). If you need to spin up sibling services, run them from the host and connect via `host.docker.internal`.
 - **Pinned dependencies** — all AI CLI tools are installed at exact versions in the Dockerfile, so a compromised new release won't silently end up in your image on the next build.
 - **Claude Code deny list** — `claude-settings.json` blocks `sudo`, `rm -rf /`, and `curl/wget | sh` patterns so the AI cannot self-escalate even if prompted to.

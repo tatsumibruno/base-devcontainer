@@ -7,9 +7,19 @@ services:
     tty: true
     stdin_open: true
     working_dir: /workspace
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - ./workspace:/workspace
       - ./claude-settings.json:/workspace/.claude/settings.json
       - ./codex-config.toml:/workspace/.codex/config.toml
+      - type: bind
+        source: ${SSH_AUTH_SOCK_HOST:-/tmp/ssh-agent.sock}
+        target: /ssh-agent
+        bind:
+          create_host_path: false
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    ports:
+      - 3000:3000
